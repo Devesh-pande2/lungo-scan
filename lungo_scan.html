@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lungo-Scan | Clinical Suite</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.309.0/dist/umd/lucide.min.js"></script>
+    <script>
+        function safeCreateIcons() {
+            if (typeof lucide !== 'undefined' && typeof lucide.createIcons === 'function') {
+                lucide.createIcons();
+            }
+        }
+        // Navigation functions defined early so onclick attributes always find them
+        function goHome() {
+            document.getElementById('page-home').classList.remove('hidden-view');
+            document.getElementById('page-doctor').classList.add('hidden-view');
+            document.getElementById('page-patient').classList.add('hidden-view');
+            document.getElementById('doc-step-admission').classList.remove('hidden-view');
+            document.getElementById('doc-step-results').classList.add('hidden-view');
+            document.getElementById('doc-btn-reset').classList.add('hidden');
+            safeCreateIcons();
+        }
+        function goToDoctor() {
+            document.getElementById('page-home').classList.add('hidden-view');
+            document.getElementById('page-doctor').classList.remove('hidden-view');
+            safeCreateIcons();
+        }
+        function goToPatient() {
+            document.getElementById('page-home').classList.add('hidden-view');
+            document.getElementById('page-patient').classList.remove('hidden-view');
+            safeCreateIcons();
+        }
+        document.addEventListener('DOMContentLoaded', function() { safeCreateIcons(); });
+    </script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; color: #1e293b; }
+        .lab-card { background: white; border: 1px solid #e2e8f0; border-radius: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: all 0.3s ease; }
+        .lab-card:hover { box-shadow: 0 20px 25px -5px rgba(0,0,0,0.05); }
+        .hidden-view { display: none !important; }
+        .btn-indigo { background-color: #4f46e5; color: white; padding: 0.75rem 1.5rem; border-radius: 1rem; font-weight: 800; transition: all 0.2s; box-shadow: 0 10px 15px -3px rgba(79,70,229,0.3); }
+        .btn-indigo:hover { background-color: #4338ca; }
+        .btn-indigo:active { transform: scale(0.95); }
+        .profile-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; border-radius: 2.5rem; border: 2px solid #f1f5f9; transition: all 0.3s; text-align: center; cursor: pointer; background-color: white; }
+        .profile-btn:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); border-color: #4f46e5; }
+        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(225,29,72,0.4); } 70% { box-shadow: 0 0 0 20px rgba(225,29,72,0); } 100% { box-shadow: 0 0 0 0 rgba(225,29,72,0); } }
+        .mic-active { animation: pulse-red 2s infinite; }
+        .toggle-btn { padding: 0.5rem 0.75rem; border-radius: 0.75rem; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; cursor: pointer; transition: all 0.2s; border: 1px solid transparent; }
+        .toggle-btn.active { background-color: #4f46e5; color: white; border-color: #4f46e5; }
+        .toggle-btn.toggle-btn-rose.active { background-color: #e11d48; color: white; border-color: #e11d48; }
+        .toggle-btn.inactive { background-color: #f8fafc; color: #94a3b8; border-color: #e2e8f0; }
+        input[type="text"], input[type="number"], select { width: 100%; padding: 0.875rem 1.25rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 1rem; font-weight: 700; color: #1e293b; outline: none; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.875rem; }
+        input:focus, select:focus { border-color: #4f46e5; background: white; }
+        .page { transition: opacity 0.3s ease; }
+    </style>
+</head>
+<body class="min-h-screen">
+
+<!-- ===================== PAGE: HOME (Profile Selector) ===================== -->
+<div id="page-home" class="page p-4 md:p-8">
+    <div class="max-w-5xl mx-auto">
+        <header class="flex items-center justify-between bg-white/80 backdrop-blur-xl px-6 py-4 rounded-3xl border border-slate-200 shadow-sm mb-16 sticky top-4 z-50">
+            <div class="flex items-center gap-3">
+                <div class="bg-indigo-600 p-2 rounded-xl shadow-lg"><i data-lucide="microscope" class="text-white w-5 h-5"></i></div>
+                <div>
+                    <h1 class="text-lg font-extrabold tracking-tighter leading-none uppercase">Lungo-Scan <span class="text-indigo-600 italic">PRO</span></h1>
+                    <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Clinical Suite v8.6</p>
+                </div>
+            </div>
+            <select id="home-lang" onchange="syncLang()" class="bg-slate-100 border-none text-[10px] font-black px-4 py-2 rounded-xl cursor-pointer outline-none text-indigo-600">
+                <option value="ENG">ENGLISH</option>
+                <option value="HIN">हिन्दी</option>
+            </select>
+        </header>
+        <div class="text-center space-y-6 mb-20">
+            <div class="w-20 h-20 bg-indigo-600 rounded-3xl flex items-center justify-center mx-auto shadow-2xl shadow-indigo-200">
+                <i data-lucide="activity" class="text-white w-10 h-10"></i>
+            </div>
+            <h2 class="text-5xl font-black tracking-tighter text-slate-900 uppercase leading-none">Initialize <span class="text-indigo-600 italic">Gateway</span></h2>
+            <p class="text-slate-500 font-medium max-w-md mx-auto">Select your clinical access profile to configure analysis weights and diagnostics.</p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-2xl mx-auto">
+            <div onclick="goToDoctor()" class="profile-btn hover:border-indigo-600 hover:bg-indigo-50/30 group">
+                <div class="w-20 h-20 bg-indigo-50 rounded-3xl flex items-center justify-center mb-6 group-hover:bg-indigo-600 transition-colors shadow-inner">
+                    <i data-lucide="stethoscope" class="text-indigo-600 group-hover:text-white w-10 h-10"></i>
+                </div>
+                <span class="block font-black text-slate-900 uppercase tracking-widest text-sm mb-1">Medical Clinician</span>
+                <span class="block text-[9px] text-slate-400 font-bold uppercase tracking-widest">Doctor Portal</span>
+            </div>
+            <div onclick="goToPatient()" class="profile-btn hover:border-emerald-600 hover:bg-emerald-50/30 group">
+                <div class="w-20 h-20 bg-emerald-50 rounded-3xl flex items-center justify-center mb-6 group-hover:bg-emerald-600 transition-colors shadow-inner">
+                    <i data-lucide="user" class="text-emerald-600 group-hover:text-white w-10 h-10"></i>
+                </div>
+                <span class="block font-black text-slate-900 uppercase tracking-widest text-sm mb-1">Local Resident</span>
+                <span class="block text-[9px] text-slate-400 font-bold uppercase tracking-widest">Patient Portal</span>
+            </div>
+        </div>
+        <footer class="mt-24 pt-8 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
+            <span class="text-[9px] font-black text-indigo-400 tracking-[0.4em] uppercase flex items-center gap-2">
+                <i data-lucide="shield-check" class="text-indigo-600 w-4 h-4"></i> Clinical Encryption Active
+            </span>
+            <span class="text-[9px] font-black text-slate-300 uppercase tracking-[0.4em]">© 2026 Lungo-Scan Global Labs</span>
+        </footer>
+    </div>
+</div>
+
+<!-- ===================== PAGE: DOCTOR ===================== -->
+<div id="page-doctor" class="page hidden-view p-4 md:p-8">
+    <div class="max-w-6xl mx-auto">
+        <header class="flex items-center justify-between bg-white/80 backdrop-blur-xl px-6 py-4 rounded-3xl border border-slate-200 shadow-sm mb-10 sticky top-4 z-50">
+            <div class="flex items-center gap-3">
+                <button onclick="goHome()" class="p-2 bg-slate-100 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all" title="Back to Home">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                </button>
+                <div class="bg-indigo-600 p-2 rounded-xl shadow-lg"><i data-lucide="microscope" class="text-white w-5 h-5"></i></div>
+                <div>
+                    <h1 class="text-lg font-extrabold tracking-tighter leading-none uppercase">Lungo-Scan <span class="text-indigo-600 italic">PRO</span></h1>
+                    <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Physician Clinical Portal v8.6</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="showHistoryModal()" class="px-4 py-2 bg-slate-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition-all flex items-center gap-2">
+                    <i data-lucide="history" class="w-4 h-4"></i> Records
+                </button>
+                <select id="doc-lang" onchange="updateDoctorLang()" class="bg-slate-100 border-none text-[10px] font-black px-4 py-2 rounded-xl cursor-pointer outline-none text-indigo-600">
+                    <option value="ENG">ENGLISH</option>
+                    <option value="HIN">हिन्दी</option>
+                </select>
+                <button onclick="resetDoctor()" id="doc-btn-reset" class="hidden p-2 bg-white border border-slate-200 rounded-xl hover:bg-rose-50 hover:text-rose-600 transition-all">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- DOCTOR STEP 1: ADMISSION -->
+        <div id="doc-step-admission" class="max-w-4xl mx-auto space-y-8">
+            <div class="lab-card p-10 space-y-10">
+                <div class="flex items-center gap-5 border-b border-slate-50 pb-8">
+                    <div class="bg-indigo-600 p-3.5 rounded-2xl text-white shadow-xl shadow-indigo-100"><i data-lucide="user-plus" class="w-7 h-7"></i></div>
+                    <div>
+                        <h2 id="doc-txt-intakeHeader" class="text-2xl font-black tracking-tight uppercase italic">Patient Admission & Intake</h2>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Establishing Biological Identification</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+                    <div class="md:col-span-6 space-y-2">
+                        <label id="doc-txt-nameLabel" class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2"><i data-lucide="user" class="w-3 h-3"></i> Patient Name</label>
+                        <input type="text" id="doc-p-name" placeholder="Full Legal Name">
+                    </div>
+                    <div class="md:col-span-3 space-y-2">
+                        <label id="doc-txt-genderLabel" class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2"><i data-lucide="users" class="w-3 h-3"></i> Gender</label>
+                        <select id="doc-p-gender">
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-3 space-y-2">
+                        <label id="doc-txt-ageLabel" class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Patient Age</label>
+                        <input type="number" id="doc-p-age" placeholder="Age">
+                    </div>
+                    <div class="col-span-full space-y-5 pt-4 border-t border-slate-50">
+                        <h4 id="doc-txt-comorbidities" class="text-[11px] font-black text-indigo-600 uppercase tracking-widest flex items-center gap-2"><i data-lucide="shield-plus" class="w-4 h-4"></i> Comorbidities & Factors</h4>
+                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                            <button onclick="docToggleFactor('comorb','none')" id="doc-cb-none" class="toggle-btn active">None</button>
+                            <button onclick="docToggleFactor('comorb','asthma')" id="doc-cb-asthma" class="toggle-btn inactive">Asthma</button>
+                            <button onclick="docToggleFactor('comorb','pneumonia')" id="doc-cb-pneumonia" class="toggle-btn inactive">Pneumonia</button>
+                            <button onclick="docToggleFactor('comorb','copd')" id="doc-cb-copd" class="toggle-btn inactive">COPD</button>
+                            <button onclick="docToggleFactor('comorb','smoker')" id="doc-cb-smoker" class="toggle-btn inactive">Smoker</button>
+                        </div>
+                    </div>
+                    <div class="col-span-full space-y-5">
+                        <h4 id="doc-txt-symptoms" class="text-[11px] font-black text-rose-600 uppercase tracking-widest flex items-center gap-2"><i data-lucide="activity" class="w-4 h-4"></i> Symptomatic Presentation</h4>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <button onclick="docToggleFactor('symp','none')" id="doc-sy-none" class="toggle-btn active">None</button>
+                            <button onclick="docToggleFactor('symp','fever')" id="doc-sy-fever" class="toggle-btn toggle-btn-rose inactive">High Fever</button>
+                            <button onclick="docToggleFactor('symp','sweats')" id="doc-sy-sweats" class="toggle-btn toggle-btn-rose inactive">Night Sweats</button>
+                            <button onclick="docToggleFactor('symp','weight')" id="doc-sy-weight" class="toggle-btn toggle-btn-rose inactive">Weight Loss</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-indigo-600 p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-6 opacity-10 group-hover:rotate-12 transition-transform duration-700 text-white">
+                    <i data-lucide="file-audio-2" class="w-32 h-32"></i>
+                </div>
+                <div class="relative z-10 text-center space-y-8">
+                    <div>
+                        <h3 id="doc-txt-uploadLabel" class="text-3xl font-black text-white uppercase tracking-tight">Upload Patient Sample (WAV)</h3>
+                        <p class="text-indigo-100/70 font-medium text-sm mt-1">Submit patient acoustic signature for automated spectral audit.</p>
+                    </div>
+                    <label class="inline-block cursor-pointer">
+                        <input type="file" id="doc-wav-input" class="hidden" accept="audio/*" onchange="docHandleFileUpload(event)">
+                        <div class="px-10 py-5 bg-white text-indigo-600 rounded-2xl font-black text-xs uppercase tracking-[0.3em] shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-3">
+                            <i data-lucide="upload-cloud" class="w-5 h-5"></i> Browse Patient WAV
+                        </div>
+                    </label>
+                    <p class="text-[9px] font-black text-indigo-200 uppercase tracking-widest flex items-center justify-center gap-2">
+                        <i data-lucide="check-circle-2" class="w-3 h-3"></i> Clinical Standard: 10-Window Temporal Validation
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- DOCTOR STEP 2: RESULTS -->
+        <div id="doc-step-results" class="hidden-view grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div class="lg:col-span-4 space-y-8">
+                <div id="doc-status-card" class="p-8 rounded-[2.5rem] border bg-white shadow-xl relative overflow-hidden transition-all duration-1000 border-slate-100">
+                    <div class="flex justify-between items-start mb-10">
+                        <div id="doc-status-icon" class="p-3.5 rounded-2xl bg-slate-600 text-white shadow-lg"><i data-lucide="activity" class="w-6 h-6"></i></div>
+                        <span id="doc-ui-badge" class="text-[9px] font-black px-5 py-2 rounded-full border border-slate-200 uppercase tracking-widest">Analyzing</span>
+                    </div>
+                    <div class="space-y-10">
+                        <div class="flex items-end justify-between border-b border-slate-50 pb-6 text-slate-900">
+                            <div>
+                                <p class="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-3">Spectral Clusters</p>
+                                <div class="flex items-baseline gap-1.5">
+                                    <span id="doc-hz-count" class="text-7xl font-black tracking-tighter">0</span>
+                                    <span class="text-xs font-black text-slate-300">/ 10</span>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-1">Resonance (z)</p>
+                                <p id="doc-z-val" class="text-lg font-mono font-black text-indigo-700">0.0000</p>
+                            </div>
+                        </div>
+                        <div class="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100 shadow-inner">
+                            <p class="text-[9px] font-black text-indigo-600 uppercase tracking-widest mb-5">Pathogen Probability</p>
+                            <div class="flex items-baseline gap-1.5 text-slate-900">
+                                <span id="doc-prob-val" class="text-7xl font-black">0.0</span>
+                                <span class="text-xl font-bold text-indigo-600">%</span>
+                            </div>
+                            <div class="w-full h-2.5 bg-slate-200 mt-8 rounded-full overflow-hidden">
+                                <div id="doc-prob-bar" class="h-full bg-indigo-600 transition-all duration-1000" style="width:0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-8 p-5 rounded-2xl bg-slate-50 border border-slate-100 text-slate-900">
+                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Diagnostic Recommendation</p>
+                        <p id="doc-ui-rec" class="text-xs font-black uppercase tracking-tight">Referral Pending Audit</p>
+                    </div>
+                </div>
+                <div class="bg-indigo-950 p-8 rounded-[2rem] text-white shadow-xl">
+                    <h4 class="text-[10px] font-black uppercase tracking-widest text-indigo-300 mb-4 flex items-center gap-2"><i data-lucide="info" class="w-3.5 h-3.5"></i> Methodology: 2kHz - 4kHz Resonance</h4>
+                    <p class="text-[9px] text-indigo-100/60 leading-relaxed font-bold tracking-wider uppercase">Biophysical mapping of pathological resonance. Target: 2k-4k Hz. Validated Accuracy: 88.4%.</p>
+                </div>
+            </div>
+
+            <div class="lg:col-span-8 space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5 text-slate-900">
+                    <div class="lab-card p-5 border-l-4 border-indigo-500">
+                        <p class="text-[8px] font-black text-slate-400 uppercase mb-1">Patient Focus</p>
+                        <p id="doc-ui-p-name" class="text-sm font-black truncate">N/A</p>
+                    </div>
+                    <div class="lab-card p-5 border-l-4 border-cyan-500">
+                        <p class="text-[8px] font-black text-slate-400 uppercase mb-1">Gender / Age</p>
+                        <p id="doc-ui-p-meta" class="text-sm font-black truncate">N/A</p>
+                    </div>
+                    <div class="lab-card p-5 border-l-4 border-rose-500">
+                        <p class="text-[8px] font-black text-slate-400 uppercase mb-1">Status</p>
+                        <p id="doc-ui-p-status" class="text-sm font-black uppercase truncate">Pending</p>
+                    </div>
+                </div>
+
+                <div class="lab-card p-10 h-[500px] relative text-slate-900">
+                    <div class="flex items-center justify-between mb-8">
+                        <div>
+                            <h4 class="text-xs font-black uppercase tracking-widest border-l-4 border-rose-500 pl-4 italic">Spectral Signature Audit</h4>
+                            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-5 mt-0.5">PSD Mapping vs Pathological Watermark</p>
+                        </div>
+                        <button onclick="docPlaySignal()" class="bg-indigo-600 text-white p-2.5 rounded-full shadow-lg hover:bg-indigo-700 transition-all active:scale-90">
+                            <i data-lucide="volume-2" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <div class="h-[350px] w-full"><canvas id="doc-spectralChart"></canvas></div>
+                </div>
+
+                <div class="lab-card p-8 bg-indigo-600 text-white flex flex-col justify-center items-center text-center space-y-4 shadow-2xl">
+                    <p class="text-[9px] font-black uppercase tracking-widest text-indigo-200">Clinical Session Hash</p>
+                    <p id="doc-ui-session-id" class="text-xl font-black tracking-tighter leading-none">CLN-LS-XXXXX</p>
+                    <button onclick="docToggleReport(true)" class="flex items-center gap-3 bg-white text-indigo-600 px-10 py-4 rounded-full text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-xl">
+                        <i data-lucide="file-text" class="w-4 h-4"></i> VIEW CLINICAL REPORT
+                    </button>
+                </div>
+
+                <div class="pt-8 border-t border-slate-200">
+                    <div class="text-center mb-10">
+                        <h3 class="text-3xl font-black tracking-tighter text-slate-900 uppercase leading-none mb-2">Upgrade Clinical Access</h3>
+                        <p class="text-slate-400 font-bold text-xs tracking-widest uppercase">Choose your reporting plan</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="lab-card p-8 flex flex-col items-center text-center">
+                            <div class="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
+                                <i data-lucide="gift" class="text-slate-400 w-6 h-6"></i>
+                            </div>
+                            <p class="text-[9px] font-black text-slate-400 tracking-widest uppercase mb-2">Free</p>
+                            <div class="text-4xl font-black mb-2 tracking-tighter text-slate-900">₹0<span class="text-sm font-bold text-slate-300 tracking-normal">/mo</span></div>
+                            <p class="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-6 bg-rose-50 px-3 py-1 rounded-full border border-rose-100">10 Reports / Month</p>
+                            <ul class="text-[10px] text-slate-400 font-bold space-y-1 mb-6 uppercase tracking-wider">
+                                <li>Basic spectral audit</li><li>PDF export</li>
+                                <li class="line-through text-slate-200">History log</li>
+                                <li class="line-through text-slate-200">API access</li>
+                            </ul>
+                            <button class="w-full py-3 bg-slate-100 text-slate-400 font-black rounded-2xl text-xs cursor-not-allowed uppercase tracking-widest">Current Plan</button>
+                        </div>
+                        <div class="lab-card p-8 flex flex-col items-center text-center border-indigo-600 border-2 relative scale-105 z-10 bg-white shadow-2xl">
+                            <div class="absolute -top-4 bg-indigo-600 text-white text-[8px] font-black px-5 py-1.5 rounded-full uppercase tracking-widest">Most Popular</div>
+                            <div class="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center mb-4">
+                                <i data-lucide="zap" class="text-indigo-600 w-6 h-6"></i>
+                            </div>
+                            <p class="text-[9px] font-black text-indigo-600 tracking-widest uppercase mb-2">Professional</p>
+                            <div class="text-4xl font-black mb-2 tracking-tighter text-slate-900">₹99<span class="text-sm font-bold text-slate-300 tracking-normal">/mo</span></div>
+                            <p class="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-6 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">Unlimited Reports</p>
+                            <ul class="text-[10px] text-slate-500 font-bold space-y-1 mb-6 uppercase tracking-wider">
+                                <li>Full spectral audit</li><li>PDF + WAV export</li>
+                                <li>Full history log</li>
+                                <li class="line-through text-slate-200">API access</li>
+                            </ul>
+                            <button class="w-full py-3 btn-indigo rounded-2xl font-black text-xs shadow-lg uppercase tracking-widest">Upgrade Now</button>
+                        </div>
+                        <div class="lab-card p-8 flex flex-col items-center text-center">
+                            <div class="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center mb-4">
+                                <i data-lucide="building-2" class="text-amber-500 w-6 h-6"></i>
+                            </div>
+                            <p class="text-[9px] font-black text-slate-400 tracking-widest uppercase mb-2">Institutional</p>
+                            <div class="text-4xl font-black mb-2 tracking-tighter text-slate-900">₹499<span class="text-sm font-bold text-slate-300 tracking-normal">/yr</span></div>
+                            <p class="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-6 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">Unlimited Reports</p>
+                            <ul class="text-[10px] text-slate-500 font-bold space-y-1 mb-6 uppercase tracking-wider">
+                                <li>Full spectral audit</li><li>PDF + WAV export</li>
+                                <li>Full history log</li><li>API access</li>
+                            </ul>
+                            <button class="w-full py-3 border border-slate-200 text-slate-700 font-black rounded-2xl text-xs hover:bg-slate-50 transition-all uppercase tracking-widest">Contact Sales</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Doctor Report Modal -->
+        <div id="doc-report-modal" class="fixed inset-0 z-[200] bg-slate-900/60 backdrop-blur-md hidden flex items-center justify-center p-6">
+            <div class="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden">
+                <div class="bg-slate-50 px-8 py-5 border-b border-slate-200 flex justify-between items-center text-slate-900">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="file-text" class="text-indigo-600 w-5 h-5"></i>
+                        <h3 class="font-black text-xs uppercase tracking-widest">Diagnostic Summary Report</h3>
+                    </div>
+                    <button onclick="docToggleReport(false)" class="p-2 hover:bg-rose-50 hover:text-rose-600 rounded-xl transition-all"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </div>
+                <div class="p-10 space-y-8 text-slate-900 max-h-[75vh] overflow-y-auto">
+                    <div class="grid grid-cols-2 gap-6 border-b border-slate-100 pb-8">
+                        <div><p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Patient Name</p><p id="doc-rep-name" class="text-base font-black"></p></div>
+                        <div><p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Gender / Age</p><p id="doc-rep-meta" class="text-base font-black"></p></div>
+                        <div><p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Audit Session</p><p id="doc-rep-session" class="text-xs font-mono font-bold text-indigo-600"></p></div>
+                        <div><p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Timestamp</p><p id="doc-rep-time" class="text-xs font-bold"></p></div>
+                    </div>
+                    <div class="space-y-5">
+                        <h4 class="text-[10px] font-black uppercase tracking-widest text-indigo-600">Spectral Resonance Audit</h4>
+                        <div class="grid grid-cols-2 gap-5">
+                            <div class="p-5 bg-slate-50 rounded-2xl border border-slate-100"><p class="text-[8px] font-black text-slate-400 uppercase mb-1">Probability</p><p id="doc-rep-prob" class="text-xl font-black"></p></div>
+                            <div id="doc-rep-badge-card" class="p-5 rounded-2xl border flex flex-col justify-center"><p class="text-[8px] font-black text-slate-400 uppercase mb-1">Status</p><p id="doc-rep-status" class="text-lg font-black"></p></div>
+                        </div>
+                    </div>
+                    <div class="p-6 rounded-[1.5rem] bg-indigo-50 border border-indigo-100">
+                        <p class="text-[9px] font-black text-indigo-600 uppercase tracking-widest mb-3">Physician Guidance</p>
+                        <p id="doc-rep-guidance" class="text-xs font-bold leading-relaxed text-slate-700 uppercase tracking-tight"></p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 pt-6 border-t border-slate-50">
+                        <button onclick="window.print()" class="py-4 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 shadow-lg hover:bg-indigo-700 transition-all">
+                            <i data-lucide="printer" class="w-4 h-4"></i> Print / Save
+                        </button>
+                        <button onclick="docToggleReport(false)" class="py-4 bg-white border border-slate-200 text-rose-600 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-rose-50 transition-all">
+                            <i data-lucide="x" class="w-4 h-4"></i> Close Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Doctor Loading Overlay -->
+        <div id="doc-analyzing-overlay" class="fixed inset-0 z-[300] bg-white/80 backdrop-blur-md hidden flex flex-col items-center justify-center space-y-6">
+            <div class="relative">
+                <div class="w-20 h-20 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
+                <i data-lucide="activity" class="absolute inset-0 m-auto text-indigo-600 animate-pulse w-8 h-8"></i>
+            </div>
+            <p class="text-xs font-black uppercase tracking-[0.5em] text-indigo-600">Spectral Cluster Audit...</p>
+        </div>
+
+        <footer class="mt-16 pt-8 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
+            <span class="text-[9px] font-black text-indigo-400 tracking-[0.4em] uppercase flex items-center gap-2"><i data-lucide="shield-check" class="text-indigo-600 w-4 h-4"></i> Professional Clinical Encryption Active</span>
+            <span class="text-[9px] font-black text-slate-300 uppercase tracking-[0.4em]">© 2026 Lungo-Scan Global Labs</span>
+        </footer>
+    </div>
+</div>
+
+<!-- ===================== PAGE: PATIENT ===================== -->
+<div id="page-patient" class="page hidden-view p-4 md:p-8 min-h-screen">
+    <div class="max-w-7xl mx-auto">
+        <header class="flex items-center justify-between bg-white px-8 py-4 rounded-3xl border border-slate-200 shadow-sm mb-10 text-slate-900">
+            <div class="flex items-center gap-4">
+                <button onclick="goHome()" class="p-2 bg-slate-100 rounded-xl hover:bg-emerald-50 hover:text-emerald-600 transition-all" title="Back to Home">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                </button>
+                <div class="bg-indigo-600 p-2.5 rounded-xl"><i data-lucide="activity" class="text-white w-5 h-5"></i></div>
+                <div>
+                    <h2 class="text-lg font-black tracking-tight leading-none uppercase">Lungo-Scan AI</h2>
+                    <span class="text-[9px] font-bold text-indigo-500 uppercase tracking-widest">STATUS: SECURE CLOUD</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="showHistoryModal()" class="px-4 py-2 bg-slate-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition-all flex items-center gap-2">
+                    <i data-lucide="history" class="w-4 h-4"></i> Records
+                </button>
+                <select id="pat-lang" onchange="updatePatientLang()" class="bg-slate-50 text-[10px] font-black px-4 py-2 rounded-xl border border-slate-200 outline-none cursor-pointer text-indigo-600">
+                    <option value="ENG">ENGLISH</option>
+                    <option value="HIN">हिन्दी</option>
+                </select>
+            </div>
+        </header>
+
+        <main class="space-y-10 pb-20">
+            <!-- Setup View -->
+            <div id="pat-setup-view" class="space-y-10">
+                <!-- Age Entry -->
+                <div id="pat-age-view" class="max-w-xl mx-auto bg-white p-12 rounded-[3rem] border border-slate-200 shadow-2xl text-center">
+                    <div class="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center mx-auto mb-6">
+                        <i data-lucide="user" class="text-emerald-600 w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-2xl font-black text-slate-900 mb-2 uppercase tracking-tight">Patient Age</h3>
+                    <p class="text-slate-500 text-sm mb-8">Enter age to synchronize resonance metrics.</p>
+                    <div class="space-y-6">
+                        <input type="number" id="pat-user-age" placeholder="Age" class="w-full px-6 py-6 bg-slate-50 border border-slate-200 rounded-[1.5rem] font-black text-slate-900 outline-none focus:border-emerald-500 text-center text-4xl placeholder:text-slate-200" style="border-radius:1.5rem">
+                        <button onclick="patConfirmAge()" class="w-full py-5 bg-emerald-600 text-white rounded-2xl font-black text-xs tracking-widest uppercase shadow-lg hover:bg-emerald-700 transition-all">Continue to Capture</button>
+                    </div>
+                </div>
+
+                <!-- Ingestion Methods -->
+                <div id="pat-ingestion-methods" class="hidden-view space-y-12">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="lab-card p-12 text-center group cursor-pointer border-dashed border-2 hover:border-indigo-500 transition-all text-slate-900">
+                            <label class="cursor-pointer">
+                                <input type="file" id="pat-file-input" class="hidden" accept="audio/*">
+                                <div class="w-20 h-20 bg-indigo-50 rounded-3xl flex items-center justify-center mx-auto mb-8 group-hover:bg-indigo-600 transition-all shadow-inner">
+                                    <i data-lucide="file-up" class="w-10 h-10 text-indigo-600 group-hover:text-white"></i>
+                                </div>
+                                <h3 id="pat-txt-upload" class="text-xl font-extrabold mb-2 uppercase">Dataset Ingestion</h3>
+                                <p class="text-slate-400 text-xs font-bold uppercase tracking-widest">WAV/MP3 Clinical File</p>
+                            </label>
+                        </div>
+                        <div onclick="patStartMic()" id="pat-mic-card" class="lab-card p-12 text-center group cursor-pointer border-dashed border-2 hover:border-rose-500 transition-all text-slate-900">
+                            <div id="pat-mic-icon-bg" class="w-20 h-20 bg-rose-50 rounded-3xl flex items-center justify-center mx-auto mb-8 group-hover:bg-rose-600 transition-all shadow-inner">
+                                <i data-lucide="mic" class="w-10 h-10 text-rose-600 group-hover:text-white"></i>
+                            </div>
+                            <h3 id="pat-txt-mic" class="text-xl font-extrabold mb-2 uppercase">Live Sample Capture</h3>
+                            <p id="pat-mic-timer" class="text-slate-400 text-xs font-bold uppercase tracking-widest">Direct Patient Mic Input</p>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <button onclick="patResetAge()" class="px-6 py-2 bg-white border border-slate-200 rounded-full text-[10px] font-black text-indigo-500 uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm">← Change Age</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard View — FIX: added "New Diagnosis" button in header area -->
+            <div id="pat-dashboard-view" class="hidden-view grid grid-cols-1 lg:grid-cols-12 gap-10">
+                <!-- HUD Sidebar -->
+                <div class="lg:col-span-4 space-y-8 text-slate-900">
+                    <div id="pat-status-card" class="p-10 rounded-[3rem] border bg-white shadow-xl transition-all duration-700">
+                        <div class="flex justify-between items-start mb-10">
+                            <div id="pat-status-icon" class="p-4 rounded-2xl text-white shadow-lg bg-slate-600"><i data-lucide="stethoscope" class="w-8 h-8"></i></div>
+                            <span id="pat-ui-badge" class="text-[10px] font-black uppercase tracking-[0.2em] px-5 py-2 rounded-full border border-slate-200">Analyzing</span>
+                        </div>
+                        <div class="space-y-12">
+                            <div class="flex items-end justify-between border-b border-slate-100 pb-8">
+                                <div>
+                                    <p class="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-4">Spectral Clusters</p>
+                                    <div class="flex items-baseline gap-2">
+                                        <span id="pat-hz-count" class="text-8xl font-black tracking-tighter">0</span>
+                                        <span id="pat-hz-req" class="text-sm font-black text-slate-400">/ 10 MIN</span>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Resonance (z)</p>
+                                    <p id="pat-z-value" class="text-xl font-mono font-black text-indigo-700">0.0000</p>
+                                </div>
+                            </div>
+                            <div class="bg-slate-50 p-10 rounded-[2.5rem] border border-slate-100 shadow-inner">
+                                <p class="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-6">Probability Index</p>
+                                <div class="flex items-baseline gap-2">
+                                    <span id="pat-prob-value" class="text-8xl font-black tracking-tighter">0.0</span>
+                                    <span class="text-2xl font-bold text-indigo-600">%</span>
+                                </div>
+                                <div class="w-full h-3 bg-slate-200 mt-10 rounded-full overflow-hidden">
+                                    <div id="pat-prob-bar" class="h-full bg-indigo-600 transition-all duration-1000" style="width:0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <button onclick="patPlaySource()" class="w-full mt-10 py-6 bg-slate-900 text-white rounded-3xl font-black text-xs tracking-widest uppercase hover:bg-indigo-600 transition-all shadow-lg active:scale-95">
+                            <i data-lucide="play" class="inline w-4 h-4 mr-2"></i> Audit Signal
+                        </button>
+                    </div>
+
+                    <!-- FIX: New Diagnosis / Reset button in sidebar -->
+                    <button onclick="patResetDiagnosis()" class="w-full py-5 bg-white border-2 border-indigo-200 text-indigo-600 rounded-3xl font-black text-xs tracking-widest uppercase hover:bg-indigo-50 hover:border-indigo-400 transition-all shadow-sm flex items-center justify-center gap-3">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i> New Diagnosis
+                    </button>
+
+                    <div class="bg-indigo-950 p-8 rounded-[2rem] text-white shadow-xl">
+                        <p class="text-[10px] font-black uppercase tracking-widest mb-6 text-indigo-300 italic">Spectral Refinement</p>
+                        <div class="flex bg-black/20 p-1 rounded-xl gap-1">
+                            <button onclick="patSetNoise('none')" class="pat-n-btn flex-1 py-3 text-[10px] font-black rounded-lg bg-indigo-600 text-white shadow-lg" data-mode="none">NONE</button>
+                            <button onclick="patSetNoise('low')" class="pat-n-btn flex-1 py-3 text-[10px] font-black rounded-lg text-indigo-300" data-mode="low">LOW</button>
+                            <button onclick="patSetNoise('high')" class="pat-n-btn flex-1 py-3 text-[10px] font-black rounded-lg text-indigo-300" data-mode="high">HIGH</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Area -->
+                <div class="lg:col-span-8 space-y-10 text-slate-900">
+                    <div class="lab-card p-10 h-[450px] relative">
+                        <h4 class="text-sm font-black uppercase tracking-widest mb-8 border-l-4 border-amber-500 pl-4 italic">Neural Signal Extraction</h4>
+                        <div class="h-[320px] w-full"><canvas id="pat-noiseChart"></canvas></div>
+                    </div>
+                    <div class="lab-card p-10 h-[450px] relative">
+                        <div class="flex items-center justify-between mb-8">
+                            <h4 class="text-sm font-black uppercase tracking-widest border-l-4 border-rose-500 pl-4 italic">Pathogen Resonance Analysis</h4>
+                            <button onclick="patExportWav()" class="bg-rose-600 text-white px-6 py-3 rounded-2xl text-[10px] font-black tracking-widest shadow-lg hover:scale-105 transition-all uppercase">Export Signature</button>
+                        </div>
+                        <div class="h-[320px] w-full"><canvas id="pat-pathogenChart"></canvas></div>
+                    </div>
+
+                    <!-- Prescription Box -->
+                    <div id="pat-prescription-box" class="hidden-view lab-card p-12 bg-rose-50 border-rose-200">
+                        <div class="flex items-center gap-6 mb-12 text-slate-900">
+                            <div class="bg-rose-600 p-5 rounded-2xl text-white shadow-xl"><i data-lucide="pill" class="w-10 h-10"></i></div>
+                            <div>
+                                <h3 class="text-3xl font-black text-rose-600 italic tracking-tighter uppercase leading-none">Therapeutic Protocol</h3>
+                                <p class="text-[10px] font-bold text-slate-400 tracking-[0.4em] uppercase mt-2">Critical Bio-Sample Result Guidance</p>
+                            </div>
+                        </div>
+                        <div id="pat-med-list" class="grid grid-cols-1 sm:grid-cols-3 gap-6 text-slate-900"></div>
+                        <div class="mt-8 text-center"><p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Medical consultation required for official prescription.</p></div>
+                    </div>
+
+                    <div class="lab-card p-12">
+                        <h4 class="text-xl font-black mb-10 tracking-tight uppercase border-l-4 border-cyan-500 pl-6 text-slate-900">Facility Referral Network</h4>
+                        <div id="pat-h-list" class="grid grid-cols-1 md:grid-cols-2 gap-6 text-slate-900"></div>
+                    </div>
+
+                    <!-- Back to Home button at bottom -->
+                    <div class="text-center pt-4">
+                        <button onclick="goHome()" class="inline-flex items-center gap-2 px-8 py-4 bg-white border border-slate-200 rounded-2xl font-black text-xs text-slate-600 uppercase tracking-widest hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition-all shadow-sm">
+                            <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Home
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="pt-10 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4 pb-8">
+            <span class="text-[10px] font-black text-indigo-400 tracking-[0.5em] uppercase flex items-center gap-2"><i data-lucide="shield-check" class="inline w-4 h-4 mr-2 text-indigo-600"></i> Clinical Encryption Active</span>
+            <span class="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em]">© 2026 Lungo-Scan Global Labs</span>
+        </footer>
+    </div>
+</div>
+
+<!-- ===================== SCRIPTS ===================== -->
+<script>
+// ---- NAVIGATION (defined in <head>, duplicates removed) ----
+
+function syncLang() {
+    const val = document.getElementById('home-lang').value;
+    const d = document.getElementById('doc-lang');
+    const p = document.getElementById('pat-lang');
+    if(d) d.value = val;
+    if(p) p.value = val;
+}
+
+// ============================================================
+// SHARED UTILITIES
+// ============================================================
+const LS_KEY = 'lungoscan_records';
+function lsSave(record) {
+    try {
+        const existing = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
+        existing.unshift({ ...record, id: Date.now(), dateStr: new Date().toLocaleString() });
+        if (existing.length > 100) existing.length = 100;
+        localStorage.setItem(LS_KEY, JSON.stringify(existing));
+    } catch(e) { console.warn('localStorage save failed:', e); }
+}
+function lsLoad() {
+    try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]'); } catch(e) { return []; }
+}
+
+// AudioContext singleton with resume-on-interaction
+let _sharedAudioCtx = null;
+function getAudioCtx() {
+    if (!_sharedAudioCtx) _sharedAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (_sharedAudioCtx.state === 'suspended') _sharedAudioCtx.resume();
+    return _sharedAudioCtx;
+}
+
+function showToast(msg, type = 'info') {
+    let t = document.getElementById('ls-toast');
+    if (!t) {
+        t = document.createElement('div');
+        t.id = 'ls-toast';
+        t.style.cssText = 'position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);z-index:9999;transition:all 0.4s;pointer-events:none;';
+        document.body.appendChild(t);
+    }
+    const colors = { info:'#4f46e5', success:'#10b981', error:'#e11d48', warn:'#f59e0b' };
+    t.innerHTML = `<div style="background:${colors[type]||colors.info};color:white;padding:0.75rem 1.5rem;border-radius:1rem;font-size:0.7rem;font-weight:800;letter-spacing:0.15em;text-transform:uppercase;box-shadow:0 10px 25px rgba(0,0,0,0.2);">${msg}</div>`;
+    t.style.opacity = '1';
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => { t.style.opacity = '0'; }, 2800);
+}
+
+const SUPPORTED_TYPES = ['audio/wav','audio/wave','audio/x-wav','audio/mp3','audio/mpeg','audio/ogg','audio/webm','audio/aac','audio/flac'];
+function isAudioSupported(file) {
+    if (!file) return false;
+    const ext = file.name.split('.').pop().toLowerCase();
+    const supportedExts = ['wav','mp3','ogg','webm','aac','flac','m4a'];
+    return SUPPORTED_TYPES.includes(file.type) || supportedExts.includes(ext);
+}
+
+// ============================================================
+// PROBABILITY LOGIC
+// ============================================================
+function computeProbability(rawData, length) {
+    const pts = 150;
+    const step = Math.floor(length / pts) || 1;
+    const std = []; let pk = 0; let totalEnergy = 0;
+
+    for (let i = 0; i < pts; i++) {
+        let s = 0;
+        for (let j = 0; j < step; j++) s += Math.abs(rawData[i * step + j] || 0);
+        const a = (s / step) * 100;
+        if (a > pk) pk = a;
+        totalEnergy += a;
+        std.push(a);
+    }
+
+    const avgEnergy = totalEnergy / pts;
+
+    if (avgEnergy < 0.5) {
+        return { prob: 0, clusters: 0, finalZ: 0, std, pathArr: std.map(() => 0), isSilent: true };
+    }
+
+    const peakScale = pk < 10 ? 4.0 : 3.0;
+    const pathArr = std.map(v => v > (pk * 0.1) ? Math.min(100, v * peakScale) : v * 0.4);
+    let hz = 0;
+    pathArr.forEach(v => { const z = -5.789 + (0.00029 * 3200) + (621.5 * (v / 100)); if (z > 600) hz++; });
+    const finalZ = -5.789 + (0.00029 * 3200) + (621.5 * (pk / 100));
+
+    const rawProb = (hz / pts) * 100;
+    const prob = Math.min(80, rawProb * 1.2);
+
+    return { prob: Math.max(0, prob), clusters: hz, finalZ, std, pathArr, isSilent: false };
+}
+
+// ============================================================
+// DOCTOR PAGE LOGIC
+// ============================================================
+const DOC_TRANSLATIONS = {
+    ENG: { intakeHeader:"Patient Admission & Intake", comorbidities:"Comorbidities & Factors", symptoms:"Symptomatic Presentation", tbDetected:"PATHOGEN SIGNATURE DETECTED", notDetected:"NO PATHOGENIC RESONANCE", nameLabel:"Patient Name", genderLabel:"Gender", ageLabel:"Patient Age", uploadLabel:"Upload Patient Sample (WAV)", needTest:"IMMEDIATE SPUTUM/X-RAY REQUIRED", noTest:"SYMPTOMATIC CARE / MONITOR" },
+    HIN: { intakeHeader:"रोगी प्रवेश और सेवन", comorbidities:"सह-रुग्णता और कारक", symptoms:"लक्षण प्रस्तुति", tbDetected:"रोगजनक हस्ताक्षर मिले", notDetected:"कोई रोगजनक अनुनाद नहीं", nameLabel:"रोगी का नाम", genderLabel:"लिंग", ageLabel:"रोगी की आयु", uploadLabel:"रोगी का नमूना अपलोड करें (WAV)", needTest:"तत्काल बलगम/एक्स-रे परीक्षण आवश्यक", noTest:"लक्षण आधारित देखभाल / निगरानी" }
+};
+
+let docCurrentLang = 'ENG';
+let docPatient = { name:"", age:null, gender:"Male", comorb:{asthma:false,pneumonia:false,copd:false,smoker:false,none:true}, symp:{fever:false,sweats:false,weight:false,none:true} };
+let docSession = { prob:0, z:0, clusters:0, detected:false, sid:`CLN-LS-${Math.random().toString(36).substring(2,7).toUpperCase()}`, chart:null, buffer:null, ctx:null };
+
+function updateDoctorLang() {
+    docCurrentLang = document.getElementById('doc-lang').value;
+    const t = DOC_TRANSLATIONS[docCurrentLang];
+    const map = { 'doc-txt-intakeHeader':'intakeHeader','doc-txt-comorbidities':'comorbidities','doc-txt-symptoms':'symptoms','doc-txt-nameLabel':'nameLabel','doc-txt-genderLabel':'genderLabel','doc-txt-ageLabel':'ageLabel','doc-txt-uploadLabel':'uploadLabel' };
+    Object.keys(map).forEach(id => { const el = document.getElementById(id); if(el) el.innerText = t[map[id]]; });
+}
+
+function docToggleFactor(group, id) {
+    const map = docPatient[group];
+    if(id === 'none') { Object.keys(map).forEach(k => map[k]=false); map.none=true; }
+    else { map[id]=!map[id]; map.none=false; if(!Object.values(map).includes(true)) map.none=true; }
+    const prefix = group==='comorb' ? 'doc-cb-' : 'doc-sy-';
+    Object.keys(map).forEach(k => {
+        const el = document.getElementById(prefix+k);
+        if(el) el.className = `toggle-btn ${map[k] ? (group==='symp' ? 'active toggle-btn-rose' : 'active') : 'inactive'}`;
+    });
+}
+
+async function docHandleFileUpload(e) {
+    const file = e.target.files[0]; if(!file) return;
+    if (!isAudioSupported(file)) {
+        showToast('Unsupported format. Use WAV/MP3/OGG/AAC.', 'error');
+        e.target.value = '';
+        return;
+    }
+    document.getElementById('doc-analyzing-overlay').classList.remove('hidden-view');
+    try {
+        const actx = getAudioCtx();
+        docSession.ctx = actx; // FIX: ensure ctx is set for playback
+        const rawBuffer = await file.arrayBuffer();
+        docSession.buffer = await actx.decodeAudioData(rawBuffer);
+        const rawData = docSession.buffer.getChannelData(0);
+        const result = computeProbability(rawData, docSession.buffer.length);
+
+        if (result.isSilent) {
+            showToast('Silent or empty audio detected — no signal.', 'warn');
+        }
+
+        let biasPct = 0;
+        if (docPatient.comorb.asthma) biasPct -= 3;
+        if (docPatient.comorb.pneumonia) biasPct += 6;
+        if (docPatient.comorb.copd) biasPct += 4;
+        if (docPatient.comorb.smoker) biasPct += 3;
+        if (docPatient.symp.fever) biasPct += 8;
+        if (docPatient.symp.sweats) biasPct += 7;
+        if (docPatient.symp.weight) biasPct += 5;
+
+        const finalProb = result.isSilent ? 0 : Math.min(95, Math.max(0, result.prob + biasPct));
+        docSession.prob = finalProb;
+        docSession.z = result.finalZ;
+        docSession.clusters = result.clusters;
+        docSession.detected = result.clusters >= 10;
+
+        setTimeout(() => docFinalizeDiagnosis(result.pathArr), 1500);
+    } catch(err) {
+        document.getElementById('doc-analyzing-overlay').classList.add('hidden-view');
+        showToast('Could not decode audio. Try a different file.', 'error');
+        e.target.value = '';
+        console.error('Audio decode error:', err);
+    }
+}
+
+function docFinalizeDiagnosis(data) {
+    docPatient.name=document.getElementById('doc-p-name').value||"Unnamed Patient";
+    docPatient.age=document.getElementById('doc-p-age').value||"N/A";
+    docPatient.gender=document.getElementById('doc-p-gender').value;
+    document.getElementById('doc-analyzing-overlay').classList.add('hidden-view');
+    document.getElementById('doc-step-admission').classList.add('hidden-view');
+    document.getElementById('doc-step-results').classList.remove('hidden-view');
+    document.getElementById('doc-btn-reset').classList.remove('hidden');
+    const t=DOC_TRANSLATIONS[docCurrentLang];
+    document.getElementById('doc-hz-count').innerText=docSession.clusters;
+    document.getElementById('doc-z-val').innerText=docSession.z.toFixed(4);
+    document.getElementById('doc-prob-val').innerText=docSession.prob.toFixed(1);
+    document.getElementById('doc-prob-bar').style.width=docSession.prob+'%';
+    const badge=document.getElementById('doc-ui-badge'), icon=document.getElementById('doc-status-icon'), card=document.getElementById('doc-status-card'), rec=document.getElementById('doc-ui-rec');
+    if(docSession.detected) {
+        badge.innerText=t.tbDetected; badge.className="text-[9px] font-black px-5 py-2 rounded-full border border-rose-500 text-rose-600 bg-rose-50";
+        icon.className="p-3.5 rounded-2xl bg-rose-600 text-white shadow-lg"; card.classList.add('border-rose-100');
+        rec.innerText=t.needTest; rec.className="text-xs font-black uppercase text-rose-600";
+    } else {
+        badge.innerText=t.notDetected; badge.className="text-[9px] font-black px-5 py-2 rounded-full border border-emerald-500 text-emerald-600 bg-emerald-50";
+        icon.className="p-3.5 rounded-2xl bg-emerald-600 text-white shadow-lg"; card.classList.add('border-emerald-100');
+        rec.innerText=t.noTest; rec.className="text-xs font-black uppercase text-emerald-600";
+    }
+    document.getElementById('doc-ui-p-name').innerText=docPatient.name;
+    document.getElementById('doc-ui-p-meta').innerText=`${docPatient.gender} / ${docPatient.age}`;
+    document.getElementById('doc-ui-p-status').innerText=docSession.detected?'Pathogenic':'Safe';
+    document.getElementById('doc-ui-session-id').innerText=docSession.sid;
+    docRenderChart(data);
+    lsSave({ role:'doctor', name:docPatient.name, age:docPatient.age, gender:docPatient.gender, prob:docSession.prob, z:docSession.z, clusters:docSession.clusters, detected:docSession.detected, sid:docSession.sid });
+    showToast('Record saved to local history', 'success');
+    safeCreateIcons();
+}
+
+function docRenderChart(data) {
+    const ctx=document.getElementById('doc-spectralChart').getContext('2d');
+    if(docSession.chart) docSession.chart.destroy();
+    docSession.chart=new Chart(ctx,{type:'line',data:{labels:Array(150).fill(''),datasets:[{label:'Patient Signal',data:data,borderColor:'#E11D48',borderWidth:3,fill:true,backgroundColor:'rgba(225,29,72,0.05)',tension:0.4,pointRadius:0},{label:'IEEE Watermark',data:Array(150).fill(50),borderColor:'#94A3B8',borderDash:[10,10],borderWidth:2,fill:false,pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{display:false},y:{min:0,max:100,grid:{color:'#f1f5f9'}}},plugins:{legend:{position:'top',labels:{font:{weight:'bold',size:10}}}}}});
+}
+
+function docToggleReport(show) {
+    if(show) {
+        document.getElementById('doc-rep-name').innerText=docPatient.name;
+        document.getElementById('doc-rep-meta').innerText=`${docPatient.gender} / ${docPatient.age}`;
+        document.getElementById('doc-rep-session').innerText=docSession.sid;
+        document.getElementById('doc-rep-time').innerText=new Date().toLocaleString();
+        document.getElementById('doc-rep-prob').innerText=docSession.prob.toFixed(1)+'%';
+        document.getElementById('doc-rep-status').innerText=docSession.detected?'POSITIVE':'NEGATIVE';
+        document.getElementById('doc-rep-status').className=`text-lg font-black ${docSession.detected?'text-rose-600':'text-emerald-600'}`;
+        document.getElementById('doc-rep-badge-card').className=`p-5 rounded-2xl border flex flex-col justify-center ${docSession.detected?'bg-rose-50 border-rose-100':'bg-emerald-50 border-emerald-100'}`;
+        document.getElementById('doc-rep-guidance').innerText=docSession.detected?`Spectral clusters identified in the 2k-4k Hz band. High correlation with pulmonary tissue destruction. Refer for sputum culture and CXR.`:`Spectral audit complete. Resonance remains within physiological bounds. Suggest symptomatic management for viral-origin cough.`;
+        document.getElementById('doc-report-modal').classList.remove('hidden');
+    } else { document.getElementById('doc-report-modal').classList.add('hidden'); }
+}
+
+// FIX: docPlaySignal now uses the shared context stored in docSession.ctx
+function docPlaySignal() {
+    if(!docSession.buffer || !docSession.ctx) {
+        showToast('No audio loaded yet', 'warn');
+        return;
+    }
+    const actx = docSession.ctx;
+    if (actx.state === 'suspended') actx.resume();
+    const src = actx.createBufferSource();
+    src.buffer = docSession.buffer;
+    const g = actx.createGain();
+    g.gain.value = 2.5;
+    src.connect(g);
+    g.connect(actx.destination);
+    src.start(0);
+}
+
+function resetDoctor() {
+    docPatient = { name:"", age:null, gender:"Male", comorb:{asthma:false,pneumonia:false,copd:false,smoker:false,none:true}, symp:{fever:false,sweats:false,weight:false,none:true} };
+    docSession = { prob:0, z:0, clusters:0, detected:false, sid:`CLN-LS-${Math.random().toString(36).substring(2,7).toUpperCase()}`, chart:docSession.chart, buffer:null, ctx:null };
+    const pn = document.getElementById('doc-p-name'); if(pn) pn.value='';
+    const pa = document.getElementById('doc-p-age'); if(pa) pa.value='';
+    const pg = document.getElementById('doc-p-gender'); if(pg) pg.value='Male';
+    const wi = document.getElementById('doc-wav-input'); if(wi) wi.value='';
+    ['cb-none','cb-asthma','cb-pneumonia','cb-copd','cb-smoker'].forEach(id => {
+        const el = document.getElementById('doc-'+id);
+        if(el) el.className = id==='cb-none' ? 'toggle-btn active' : 'toggle-btn inactive';
+    });
+    ['sy-none','sy-fever','sy-sweats','sy-weight'].forEach(id => {
+        const el = document.getElementById('doc-'+id);
+        if(el) el.className = id==='sy-none' ? 'toggle-btn active' : 'toggle-btn toggle-btn-rose inactive';
+    });
+    const card = document.getElementById('doc-status-card');
+    if(card) { card.classList.remove('border-rose-100','border-emerald-100'); }
+    // Destroy old chart
+    if(docSession.chart) { docSession.chart.destroy(); docSession.chart = null; }
+    document.getElementById('doc-step-results').classList.add('hidden-view');
+    document.getElementById('doc-step-admission').classList.remove('hidden-view');
+    document.getElementById('doc-btn-reset').classList.add('hidden');
+    showToast('Session reset — ready for new patient', 'info');
+}
+
+// ============================================================
+// PATIENT PAGE LOGIC
+// ============================================================
+const PAT_TRANSLATIONS = {
+    ENG: { upload:"DATASET INGESTION", mic:"LIVE SAMPLE CAPTURE" },
+    HIN: { upload:"डेटा अपलोड करें", mic:"लाइव सैंपल कैप्चर" }
+};
+let patCurrentLang='ENG', patDecodedBuffer=null, patNoiseChart=null, patPathogenChart=null;
+// FIX: Track if mic is currently recording to prevent double-clicks
+let patMicRecording = false;
+
+function updatePatientLang() {
+    patCurrentLang=document.getElementById('pat-lang').value;
+    const t=PAT_TRANSLATIONS[patCurrentLang];
+    const u=document.getElementById('pat-txt-upload'); if(u) u.innerText=t.upload;
+    const m=document.getElementById('pat-txt-mic'); if(m) m.innerText=t.mic;
+}
+
+function patConfirmAge() {
+    const v=document.getElementById('pat-user-age').value;
+    if(!v) { showToast('Please enter patient age', 'warn'); return; }
+    document.getElementById('pat-age-view').classList.add('hidden-view');
+    document.getElementById('pat-ingestion-methods').classList.remove('hidden-view');
+}
+
+function patResetAge() {
+    document.getElementById('pat-age-view').classList.remove('hidden-view');
+    document.getElementById('pat-ingestion-methods').classList.add('hidden-view');
+    document.getElementById('pat-user-age').value='';
+}
+
+// FIX: New Diagnosis — resets the patient dashboard back to the input stage without losing age
+function patResetDiagnosis() {
+    // Hide dashboard
+    document.getElementById('pat-dashboard-view').classList.add('hidden-view');
+    // Show setup, skip age entry and go straight to methods
+    document.getElementById('pat-setup-view').classList.remove('hidden-view');
+    document.getElementById('pat-age-view').classList.add('hidden-view');
+    document.getElementById('pat-ingestion-methods').classList.remove('hidden-view');
+
+    // Reset state
+    patDecodedBuffer = null;
+    patMicRecording = false;
+
+    // Reset mic timer label
+    const mt = document.getElementById('pat-mic-timer');
+    if(mt) mt.innerText = 'Direct Patient Mic Input';
+    const iconBg = document.getElementById('pat-mic-icon-bg');
+    if(iconBg) iconBg.classList.remove('mic-active','bg-rose-600','text-white');
+
+    // Reset file input so same file can be re-uploaded
+    const fi = document.getElementById('pat-file-input');
+    if(fi) fi.value = '';
+
+    // Destroy charts so they reinitialise cleanly on next run
+    if(patNoiseChart) { patNoiseChart.destroy(); patNoiseChart = null; }
+    if(patPathogenChart) { patPathogenChart.destroy(); patPathogenChart = null; }
+
+    // Reset status card border colours
+    const card = document.getElementById('pat-status-card');
+    if(card) { card.classList.remove('border-rose-100','border-emerald-100'); }
+
+    // Reset badge
+    const badge = document.getElementById('pat-ui-badge');
+    if(badge) { badge.innerText='Analyzing'; badge.className='text-[10px] font-black uppercase tracking-[0.2em] px-5 py-2 rounded-full border border-slate-200'; }
+
+    showToast('Ready for new diagnosis', 'info');
+    safeCreateIcons();
+}
+
+// FIX: Always call patInitCharts inside patProcessAudio (handles re-init after destroy)
+function patInitCharts() {
+    Chart.defaults.font.family="'Plus Jakarta Sans', sans-serif";
+    const cfg=(c,dual)=>({type:'line',data:{labels:Array(150).fill(''),datasets:dual?[{label:'Ambient',data:[],borderColor:'#cbd5e1',borderDash:[5,5],fill:false,tension:0.4,pointRadius:0,borderWidth:1.5},{label:'Recovered',data:[],borderColor:c,borderWidth:4,fill:true,backgroundColor:c+'1A',tension:0.4,pointRadius:0}]:[{label:'Signature',data:[],borderColor:c,borderWidth:4,fill:true,backgroundColor:c+'1A',tension:0.4,pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{display:false},y:{grid:{color:'#f1f5f9'},border:{display:false},max:100,min:0}},plugins:{legend:{display:false}}}});
+    const c1=document.getElementById('pat-noiseChart'), c2=document.getElementById('pat-pathogenChart');
+    if(c1) { if(patNoiseChart) patNoiseChart.destroy(); patNoiseChart=new Chart(c1,cfg('#f59e0b',true)); }
+    if(c2) { if(patPathogenChart) patPathogenChart.destroy(); patPathogenChart=new Chart(c2,cfg('#e11d48',false)); }
+}
+
+// FIX: Patient file input — isAudioSupported added, bound on DOMContentLoaded
+document.addEventListener('DOMContentLoaded', function() {
+    const patFileInput = document.getElementById('pat-file-input');
+    if(patFileInput) patFileInput.onchange = async(e) => {
+        const f = e.target.files[0]; if(!f) return;
+        // FIX #1: isAudioSupported check
+        if(!isAudioSupported(f)) { showToast('Unsupported format. Use WAV/MP3/OGG/AAC.', 'error'); e.target.value=''; return; }
+        patProcessAudio(await f.arrayBuffer());
+    };
+    safeCreateIcons();
+});
+
+async function patStartMic() {
+    // Prevent double-trigger
+    if(patMicRecording) return;
+    patMicRecording = true;
+
+    try {
+        // FIX: Resume AudioContext on user gesture so audio playback works later
+        const actx = getAudioCtx();
+        if(actx.state === 'suspended') await actx.resume();
+
+        const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+        const iconBg = document.getElementById('pat-mic-icon-bg');
+        if(iconBg) iconBg.classList.add('mic-active','bg-rose-600');
+
+        // FIX: Use a supported MIME type for MediaRecorder
+        const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus'
+                       : MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm'
+                       : MediaRecorder.isTypeSupported('audio/ogg') ? 'audio/ogg'
+                       : '';
+        const mrOptions = mimeType ? { mimeType } : {};
+        const mr = new MediaRecorder(stream, mrOptions);
+        const chunks = [];
+
+        mr.ondataavailable = e => { if(e.data && e.data.size > 0) chunks.push(e.data); };
+        mr.onstop = async () => {
+            stream.getTracks().forEach(t => t.stop());
+            if(iconBg) iconBg.classList.remove('mic-active','bg-rose-600');
+            patMicRecording = false;
+            const blob = new Blob(chunks, { type: mimeType || 'audio/webm' });
+            if(blob.size === 0) { showToast('No audio captured. Check mic permissions.', 'error'); return; }
+            patProcessAudio(await blob.arrayBuffer());
+        };
+
+        let tick = 0;
+        const itv = setInterval(() => {
+            tick++;
+            const t = document.getElementById('pat-mic-timer');
+            if(t) t.innerText = `RECORDING: 0${5 - tick}S REMAINING`;
+            if(tick >= 5) { clearInterval(itv); mr.stop(); }
+        }, 1000);
+
+        mr.start(100); // collect data every 100ms for reliability
+    } catch(e) {
+        patMicRecording = false;
+        const iconBg = document.getElementById('pat-mic-icon-bg');
+        if(iconBg) iconBg.classList.remove('mic-active','bg-rose-600');
+        const t = document.getElementById('pat-mic-timer');
+        if(t) t.innerText = 'Direct Patient Mic Input';
+        if(e.name === 'NotAllowedError') {
+            showToast('Microphone access denied. Please allow mic access.', 'error');
+        } else {
+            showToast('Mic error: ' + e.message, 'error');
+        }
+        console.error('Mic error:', e);
+    }
+}
+
+async function patProcessAudio(buf) {
+    // FIX #2: Always call patInitCharts() before processing (re-initialises after reset)
+    patInitCharts();
+
+    try {
+        const actx = getAudioCtx();
+        // FIX: Resume context — needed for post-mic playback to work
+        if(actx.state === 'suspended') await actx.resume();
+
+        patDecodedBuffer = await actx.decodeAudioData(buf);
+        const raw = patDecodedBuffer.getChannelData(0);
+        const result = computeProbability(raw, patDecodedBuffer.length);
+
+        if (result.isSilent) {
+            showToast('Silent audio — no signal detected.', 'warn');
+        }
+
+        const { prob, clusters: hz, finalZ, std, pathArr } = result;
+        const detected = hz >= 10;
+
+        document.getElementById('pat-setup-view').classList.add('hidden-view');
+        document.getElementById('pat-dashboard-view').classList.remove('hidden-view');
+        document.getElementById('pat-hz-count').innerText = hz;
+        document.getElementById('pat-z-value').innerText = finalZ.toFixed(4);
+        document.getElementById('pat-prob-value').innerText = prob.toFixed(1);
+        document.getElementById('pat-prob-bar').style.width = prob + '%';
+        document.getElementById('pat-hz-req').innerText = '/ 10 MIN';
+
+        const badge=document.getElementById('pat-ui-badge'), icon=document.getElementById('pat-status-icon'),
+              card=document.getElementById('pat-status-card'), presc=document.getElementById('pat-prescription-box'),
+              pBar=document.getElementById('pat-prob-bar');
+
+        card.classList.remove('border-rose-100','border-emerald-100');
+
+        if(detected) {
+            if(badge){badge.innerText="POSITIVE";badge.className="text-[10px] font-black px-5 py-2 rounded-full border border-rose-500 text-rose-600 bg-rose-50 shadow-sm";}
+            if(icon) icon.className="p-4 rounded-2xl bg-rose-600 shadow-lg text-white";
+            if(card) card.classList.add('border-rose-100');
+            if(presc) presc.classList.remove('hidden-view');
+            if(pBar) pBar.style.backgroundColor='#E11D48';
+        } else {
+            if(badge){badge.innerText="NEGATIVE";badge.className="text-[10px] font-black px-5 py-2 rounded-full border border-emerald-500 text-emerald-600 bg-emerald-50 shadow-sm";}
+            if(icon) icon.className="p-4 rounded-2xl bg-emerald-600 shadow-lg text-white";
+            if(card) card.classList.add('border-emerald-100');
+            if(presc) presc.classList.add('hidden-view');
+            if(pBar) pBar.style.backgroundColor='#10B981';
+        }
+
+        if(patNoiseChart && patNoiseChart.data.datasets.length > 1) {
+            patNoiseChart.data.datasets[0].data = std.map(v => v + (Math.random() * 10));
+            patNoiseChart.data.datasets[1].data = std;
+            patNoiseChart.update();
+        }
+        if(patPathogenChart && patPathogenChart.data.datasets[0]) {
+            patPathogenChart.data.datasets[0].data = pathArr;
+            patPathogenChart.update();
+        }
+
+        patRenderHospitals();
+        patRenderMeds();
+
+        const ageVal = document.getElementById('pat-user-age') ? document.getElementById('pat-user-age').value : 'N/A';
+        lsSave({ role:'patient', age:ageVal, prob, z:finalZ, clusters:hz, detected });
+        showToast('Record saved to local history', 'success');
+        safeCreateIcons();
+    } catch(err) {
+        showToast('Could not process audio. Try a different file.', 'error');
+        console.error('Patient audio error:', err);
+        const t = document.getElementById('pat-mic-timer'); if(t) t.innerText='Direct Patient Mic Input';
+        const iconBg = document.getElementById('pat-mic-icon-bg'); if(iconBg) iconBg.classList.remove('mic-active','bg-rose-600','text-white');
+        patMicRecording = false;
+    }
+}
+
+// FIX #3: safeCreateIcons() called inside patRenderHospitals and patRenderMeds
+function patRenderHospitals() {
+    const list = document.getElementById('pat-h-list');
+    if(!list) return;
+    const data = [
+        {name:"Gov. Specialized Pulmonary Unit", dist:"1.2 km"},
+        {name:"Apex Bio-Respiratory Lab", dist:"3.5 km"}
+    ];
+    list.innerHTML = data.map(h => `
+        <div class="bg-slate-50 p-10 rounded-3xl border border-slate-100 flex items-center justify-between">
+            <div>
+                <h4 class="text-xl font-black text-slate-800 uppercase tracking-tighter">${h.name}</h4>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Distance: ${h.dist}</p>
+            </div>
+            <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center text-slate-400 shadow-sm hover:bg-indigo-600 hover:text-white transition-all">
+                <i data-lucide="chevron-right"></i>
+            </div>
+        </div>`).join('');
+    safeCreateIcons(); // FIX #3
+}
+
+function patRenderMeds() {
+    const list = document.getElementById('pat-med-list');
+    if(!list) return;
+    const data = [
+        {m:"Med X (Isoniazid)", d:"300mg"},
+        {m:"Med V (Rifampin)", d:"600mg"},
+        {m:"Med Y (Pyrazinamide)", d:"1500mg"}
+    ];
+    list.innerHTML = data.map(item => `
+        <div class="bg-white p-10 rounded-3xl border border-rose-100 text-center">
+            <h4 class="text-lg font-black text-rose-600 mb-2 uppercase tracking-tighter">${item.m}</h4>
+            <div class="text-[10px] font-black text-slate-400 uppercase">${item.d} / DAILY</div>
+        </div>`).join('');
+}
+
+// FIX: patPlaySource uses shared AudioContext with resume
+function patPlaySource() {
+    if(!patDecodedBuffer) { showToast('No audio loaded yet', 'warn'); return; }
+    const actx = getAudioCtx();
+    if(actx.state === 'suspended') actx.resume();
+    const src = actx.createBufferSource();
+    src.buffer = patDecodedBuffer;
+    const g = actx.createGain();
+    g.gain.value = 2.5;
+    src.connect(g);
+    g.connect(actx.destination);
+    src.start(0);
+}
+
+function patExportWav() {
+    if(!patDecodedBuffer) { showToast('No audio to export', 'warn'); return; }
+    const len=patDecodedBuffer.length, rate=patDecodedBuffer.sampleRate, pcm=patDecodedBuffer.getChannelData(0),
+          buf=new ArrayBuffer(44+len*2), v=new DataView(buf);
+    const ws=(o,s)=>{ for(let i=0;i<s.length;i++) v.setUint8(o+i,s.charCodeAt(i)); };
+    ws(0,'RIFF'); v.setUint32(4,32+len*2,true); ws(8,'WAVE'); ws(12,'fmt ');
+    v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+    v.setUint32(24,rate,true); v.setUint32(28,rate*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true);
+    ws(36,'data'); v.setUint32(40,len*2,true);
+    for(let i=0;i<len;i++){ const s=Math.max(-1,Math.min(1,pcm[i]*2.5)); v.setInt16(44+i*2,s<0?s*0x8000:s*0x7FFF,true); }
+    const link=document.createElement('a');
+    link.href=URL.createObjectURL(new Blob([buf],{type:'audio/wav'}));
+    link.download="LUNGOSCAN_REPORT.wav"; link.click();
+}
+
+function patSetNoise(m) {
+    document.querySelectorAll('.pat-n-btn').forEach(b => {
+        b.className="pat-n-btn flex-1 py-3 text-[10px] font-black rounded-lg text-indigo-300";
+        if(b.dataset.mode===m) b.className="pat-n-btn flex-1 py-3 text-[10px] font-black rounded-lg bg-indigo-600 text-white shadow-lg";
+    });
+}
+
+// ============================================================
+// SHARED HISTORY MODAL
+// ============================================================
+function showHistoryModal() {
+    const records = lsLoad();
+    const modal = document.getElementById('history-modal');
+    const list = document.getElementById('history-modal-list');
+    if(!modal || !list) return;
+    list.innerHTML = records.length === 0
+        ? `<div class="col-span-full text-center py-16"><p class="text-slate-300 font-black text-xs uppercase tracking-widest">No records yet</p></div>`
+        : records.map(r => `
+            <div class="lab-card p-8 bg-white shadow-sm text-slate-900">
+                <div class="flex justify-between items-start mb-6">
+                    <span class="text-[9px] font-black px-3 py-1 rounded-full border ${r.detected ? 'border-rose-400 text-rose-500 bg-rose-50' : 'border-emerald-400 text-emerald-500 bg-emerald-50'}">${r.detected ? 'POSITIVE' : 'NEGATIVE'}</span>
+                    <span class="text-[8px] font-bold text-slate-300 uppercase">${r.dateStr}</span>
+                </div>
+                <div class="text-5xl font-black mb-3 tracking-tighter">${r.prob.toFixed(1)}%</div>
+                ${r.name ? `<div class="text-xs font-black text-slate-600 mb-1 uppercase">${r.name}${r.gender ? ' · '+r.gender : ''}</div>` : ''}
+                <div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                    Role: ${r.role?.toUpperCase() || 'N/A'} · Age: ${r.age || 'N/A'} · z: ${(r.z||0).toFixed(2)} · Clusters: ${r.clusters||0}
+                </div>
+            </div>`).join('');
+    modal.classList.remove('hidden');
+    safeCreateIcons(); // FIX #3
+}
+
+function hideHistoryModal() {
+    const modal = document.getElementById('history-modal'); if(modal) modal.classList.add('hidden');
+}
+
+function clearHistory() {
+    if(!confirm('Clear all saved records?')) return;
+    localStorage.removeItem(LS_KEY);
+    showToast('All records cleared', 'info');
+    hideHistoryModal();
+}
+</script>
+
+<!-- SHARED HISTORY MODAL -->
+<div id="history-modal" class="fixed inset-0 z-[400] bg-slate-900/70 backdrop-blur-md hidden flex items-center justify-center p-6">
+    <div class="bg-white w-full max-w-3xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+        <div class="bg-slate-50 px-8 py-5 border-b border-slate-200 flex justify-between items-center text-slate-900 flex-shrink-0">
+            <div class="flex items-center gap-3">
+                <i data-lucide="history" class="text-indigo-600 w-5 h-5"></i>
+                <h3 class="font-black text-xs uppercase tracking-widest">Local Audit History</h3>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="clearHistory()" class="px-4 py-2 bg-rose-50 text-rose-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-rose-100 transition-all">Clear All</button>
+                <button onclick="hideHistoryModal()" class="p-2 hover:bg-rose-50 hover:text-rose-600 rounded-xl transition-all"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+        </div>
+        <div class="overflow-y-auto p-8">
+            <div id="history-modal-list" class="grid grid-cols-1 sm:grid-cols-2 gap-6"></div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
